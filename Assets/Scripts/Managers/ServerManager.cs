@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEditor.PackageManager;
 
 public class ServerManager : SingletonMonobehaviour<ServerManager>
 {
@@ -75,7 +76,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                 if (_tcpListener.Pending())
                 {
 
-                    Debug.Log("Client" + UdpIndex + " Connected");
+                    TestDebugLog.DebugLog("Client" + UdpIndex + " Connected");
                     NetworkModule client = new NetworkModule(_tcpListener.AcceptTcpClient(),
                         new IPEndPoint(IPAddress.Parse(IP), UdpPort + UdpIndex),
                         "Client_" + UdpIndex.ToString());
@@ -83,9 +84,11 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                     stSetUdpPort setUdpPort = new stSetUdpPort();
                     setUdpPort.Header.MsgID = MessageIdTcp.SetUdpPort;
                     setUdpPort.Header.PacketSize = (ushort)Marshal.SizeOf(setUdpPort);
+                    setUdpPort.Name = "Client_" + UdpIndex.ToString();
                     setUdpPort.UdpPortSend = UdpPort;
                     setUdpPort.UdpPortReceive = (ushort)(UdpPort + UdpIndex);
-                    client.SendTcpMessage(Utilities.GetObjectToByte(setUdpPort));
+                    byte[] msg = Utilities.GetObjectToByte(setUdpPort);
+                    client.SendTcpMessage(msg);
                     _connectedClients.Add(client);
                     UdpIndex++;
                 }
@@ -103,6 +106,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
 
                 for (int i = _disConnectedClients.Count - 1; i >= 0; i--)
                 {
+                    _disConnectedClients[i].CloseModule();
                     _connectedClients.Remove(_disConnectedClients[i]);
                     _disConnectedClients.Remove(_disConnectedClients[i]);
 
@@ -131,8 +135,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                 if (_connectedClients[c].IsConnected())
                 {
                     _theStream = _connectedClients[c].Stream;
-                    Thread.Sleep(10);
-                    if (_theStream is { DataAvailable: true })
+                    if (_theStream is { DataAvailable: true } )
                     {
                         int length = 0;
                         if ((length = _theStream.Read(_connectedClients[c].Bytes, 0,
@@ -187,7 +190,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
     }
     private void TcpIncomingDataProcess(ushort msgId, byte[] msgData, int c)
     {
-        Debug.Log("Name: " + _connectedClients[c].Name + " MsgId: " + msgId);
+        TestDebugLog.DebugLog(("Name: " + _connectedClients[c].Name + " MsgId: " + msgId));
         switch (msgId)
         {
             case MessageIdTcp.RequestForMatch:
@@ -197,6 +200,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
             case MessageIdTcp.AdventurePlayerLoadInfo:
                 stAdventureRoomPlayerLoadInfo roomLoaded = Utilities.GetObjectFromByte<stAdventureRoomPlayerLoadInfo>(msgData);
                 AdventureSceneServer.Instance.EventAdventureScene.CallPlayerLoaded(roomLoaded.RoomId, roomLoaded.PlayerIndex);
+                TestDebugLog.DebugLog(roomLoaded.PlayerIndex.ToString() + " Loaded ");
                 break;
             default:
                 break;
@@ -277,9 +281,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
             {
                 IPEndPoint IPEndPointReceive = new IPEndPoint(IPAddress.Any, UdpPort);
                 byte[] udpBuffer = _udpReceive.Receive(ref IPEndPointReceive);
-
                 stHeaderUdp header = Utilities.GetObjectFromByte<stHeaderUdp>(udpBuffer);
-
                 UdpIncomingDataProcess(header.MsgID, udpBuffer);
             }
         }
@@ -295,7 +297,8 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
         {
             case MessageIdUdp.AdventurePlayerPositionToServer:
                 stAdventurePlayerPositionToServer position = Utilities.GetObjectFromByte<stAdventurePlayerPositionToServer>(msgData);
-
+                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerPositionChanged(GameRoomType.AdventureRoom,
+                    position.RoomId, position.PlayerPosition);
                 break;
         }
     }

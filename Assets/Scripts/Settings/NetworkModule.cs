@@ -67,7 +67,7 @@ public class NetworkModule
     
     public bool IsConnected()
     {
-        return _tcpSocket.Connected;
+        return _tcpSocket.Connected && _stream != null;
     }
 
 
@@ -83,7 +83,6 @@ public class NetworkModule
 
     public void CloseModule()
     {
-        _stream = null;
         _tcpSocket.Close();
         _udpSocket.Close();
     }
@@ -91,5 +90,10 @@ public class NetworkModule
     public void SendUdpMessage(byte[] message)
     {
         _udpSocket.Send(message, message.Length, _ipEndPoint);
+    }
+
+    ~NetworkModule()
+    {
+
     }
 }

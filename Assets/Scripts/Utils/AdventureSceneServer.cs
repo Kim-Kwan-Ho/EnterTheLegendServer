@@ -18,24 +18,34 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
     private ConcurrentQueue<NetworkModule> _adventureMatchingQueue = new ConcurrentQueue<NetworkModule>();
     private HashSet<string> _adventureCanceledMatch = new HashSet<string>();
     private ConcurrentDictionary<int, AdventureRoom> _adventureRoomDic = new ConcurrentDictionary<int, AdventureRoom>();
+    private ManualResetEventSlim _adventureRoomAddedEvent = new ManualResetEventSlim(false);
+
 
     private void Start()
     {
         Task.Run(AdventureMatchMakingSystem);
+        Task.Run(UpdatePlayerPositions);
     }
 
     private void OnEnable()
     {
         EventAdventureScene.OnRequestMatch += Event_RequestMatch;
         EventAdventureScene.OnPlayerLoaded += Event_PlayerLoaded;
+        EventAdventureScene.OnPlayerPositionChanged += Event_PlayerPositionChanged;
     }
 
     private void OnDisable()
     {
         EventAdventureScene.OnRequestMatch -= Event_RequestMatch;
         EventAdventureScene.OnPlayerLoaded -= Event_PlayerLoaded;
+        EventAdventureScene.OnPlayerPositionChanged -= Event_PlayerPositionChanged;
     }
 
+    private void Update()
+    {
+
+
+    }
     private void Event_RequestMatch(AdventureSceneEvent adventureSceneEvent,
         AdventureRequestMatchArgs adventureRequestMatchArgs)
     {
@@ -56,6 +66,12 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
         _adventureRoomDic[adventurePlayerLoadedArgs.roomId].PlayerLoaded(adventurePlayerLoadedArgs.playerIndex);
     }
 
+    private void Event_PlayerPositionChanged(AdventureSceneEvent adventureSceneEvent,
+        AdventurePlayerPositionChangedArgs adventurePlayerPositionChangedArgs)
+    {
+        _adventureRoomDic[adventurePlayerPositionChangedArgs.roomId]
+            .GetPlayerChangedPositions(adventurePlayerPositionChangedArgs.playerPosition);
+    }
     private Task AdventureMatchMakingSystem()
     {
         while (true)
@@ -85,6 +101,7 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
                 {
                     AdventureRoom adventureRoom = new AdventureRoom(playerInfos);
                     _adventureRoomDic.TryAdd(adventureRoom.RoomId, adventureRoom);
+                    _adventureRoomAddedEvent.Set();
                 }
                 
             }
@@ -111,6 +128,28 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
         return playerInfo;
     }
 
+    private Task UpdatePlayerPositions()
+    {
+        while (true)
+        {
+            _adventureRoomAddedEvent.Wait();
+            if (_adventureRoomDic.Count > 0)
+            {
+                foreach (var value in _adventureRoomDic.Values)
+                {
+                    value.UpdatePlayerPositions();
+                }
+            }
+            else
+            {
+                _adventureRoomAddedEvent.Reset();
+            }
+
+            Thread.Sleep((int)(1000 * UdpSendCycle.AdventureRoomSendCycle));
+
+
+        }
+    }
 
 
 

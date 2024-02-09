@@ -57,6 +57,8 @@ namespace StandardData
     {
         public stHeaderTcp Header;
 
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 10)]
+        public string Name;
         [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
         public ushort UdpPortSend;
         [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
