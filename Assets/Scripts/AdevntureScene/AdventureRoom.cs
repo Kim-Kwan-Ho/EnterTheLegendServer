@@ -61,22 +61,53 @@ public class AdventureRoom
         loadSucceed.IsAllSucceed = true;
         byte[] msg = Utilities.GetObjectToByte(loadSucceed);
 
-        TestDebugLog.DebugLog("RoomID: " + _roomId);
         foreach (AdventureRoomPlayerInfo player in _players)
         {
             player.Module.SendTcpMessage(msg);
         }
-
     }
 
-    public void GetPlayerChangedPositions(stPlayerPosition position)
+    public void PlayerPositionChanged(stPlayerPosition position)
     {
         _players[position.PlayerIndex].Positions = new Vector2(position.PositionX, position.PositionY);
     }
 
+    public void PlayerStateChanged(ushort playerIndex, ushort state)
+    {
+        stAdventureRoomPlayerStateChangedFromServer
+            stateChanged = new stAdventureRoomPlayerStateChangedFromServer();
 
+        stateChanged.Header.MsgID = MessageIdTcp.AdventureRoomPlayerStateChangedFromServer;
+        stateChanged.Header.PacketSize = (ushort)Marshal.SizeOf(stateChanged);
+        stateChanged.PlayerIndex = playerIndex;
+        stateChanged.State = state;
+        byte[] msg = Utilities.GetObjectToByte(stateChanged);
+        for (int i = 0; i < _players.Length; i++)
+        {
+            if (i == playerIndex)
+                continue;
+            _players[i].Module.SendTcpMessage(msg);
+        }
+    }
+    public void PlayerDirectionChanged(ushort playerIndex, ushort direction)
+    {
+        stAdventureRoomPlayerDirectionChangedFromServer
+            directionChanged = new stAdventureRoomPlayerDirectionChangedFromServer();
 
-    public void UpdatePlayerPositions()
+        directionChanged.Header.MsgID = MessageIdTcp.AdventureRoomPlayerDirectionChangedFromServer;
+        directionChanged.Header.PacketSize = (ushort)Marshal.SizeOf(directionChanged);
+        directionChanged.PlayerIndex = playerIndex;
+        directionChanged.Direction = direction;
+        byte[] msg = Utilities.GetObjectToByte(directionChanged);
+        for (int i = 0; i < _players.Length; i++)
+        {
+            if (i == playerIndex)
+                continue;
+            _players[i].Module.SendTcpMessage(msg);
+        }
+    }
+
+    public void SendPlayerPositions()
     {
         if (!_gameStarted)
             return;
@@ -94,8 +125,7 @@ public class AdventureRoom
         byte[] msg = Utilities.GetObjectToByte(playerPositions);
         foreach (var player in _players)
         {
-            if (player.Module.IsConnected())
-                player.Module.SendUdpMessage(msg);
+            player.Module.SendUdpMessage(msg);
         }
     }
 

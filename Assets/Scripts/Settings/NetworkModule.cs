@@ -77,6 +77,8 @@ public class NetworkModule
     }
     public void SendTcpMessage(byte[] bytes)
     {
+        if (!IsConnected())
+            return;
         _stream.Write(bytes, 0, bytes.Length);
         _stream.Flush();
     }
@@ -92,8 +94,5 @@ public class NetworkModule
         _udpSocket.Send(message, message.Length, _ipEndPoint);
     }
 
-    ~NetworkModule()
-    {
 
-    }
 }

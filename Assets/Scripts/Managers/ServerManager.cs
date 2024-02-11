@@ -6,9 +6,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEditor.PackageManager;
 
 public class ServerManager : SingletonMonobehaviour<ServerManager>
 {
@@ -190,7 +188,6 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
     }
     private void TcpIncomingDataProcess(ushort msgId, byte[] msgData, int c)
     {
-        TestDebugLog.DebugLog(("Name: " + _connectedClients[c].Name + " MsgId: " + msgId));
         switch (msgId)
         {
             case MessageIdTcp.RequestForMatch:
@@ -200,7 +197,21 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
             case MessageIdTcp.AdventurePlayerLoadInfo:
                 stAdventureRoomPlayerLoadInfo roomLoaded = Utilities.GetObjectFromByte<stAdventureRoomPlayerLoadInfo>(msgData);
                 AdventureSceneServer.Instance.EventAdventureScene.CallPlayerLoaded(roomLoaded.RoomId, roomLoaded.PlayerIndex);
-                TestDebugLog.DebugLog(roomLoaded.PlayerIndex.ToString() + " Loaded ");
+                break;
+            case MessageIdTcp.AdventureRoomPlayerStateChangedToServer:
+                stAdventureRoomPlayerStateChangedToServer stateChanged =
+                    Utilities.GetObjectFromByte<stAdventureRoomPlayerStateChangedToServer>(msgData);
+                TestDebugLog.DebugLog(("Name: " + _connectedClients[c].Name + " State: " + (State)stateChanged.State));
+
+                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerStateChanged(stateChanged.PlayerInfo.RoomId,
+                    stateChanged.PlayerInfo.PlayerIndex, stateChanged.State);
+                break;
+            case MessageIdTcp.AdventureRoomPlayerDirectionChangedToServer:
+                stAdventureRoomPlayerDirectionChangedToServer directionChanged =
+                    Utilities.GetObjectFromByte<stAdventureRoomPlayerDirectionChangedToServer>(msgData);
+                TestDebugLog.DebugLog(("Name: " + _connectedClients[c].Name + " State: " + (Direction)directionChanged.Direction));
+                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerDirectionChanged(directionChanged.PlayerInfo.RoomId,
+                    directionChanged.PlayerInfo.PlayerIndex, directionChanged.Direction);
                 break;
             default:
                 break;
@@ -259,19 +270,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
         CloseSocket();
     }
 
-    private void Update()
-    {
-        if (_connectedClients.Count > 0)
-        {
-            //연결된 클라이언트가 모든조건이 만족하면
-            foreach (NetworkModule client in _connectedClients)
-            {
-                //SendMsgUdp(Utilities.GetObjectToByte(client.dataSync));
-            }
-        }
 
-        Thread.Sleep(30);
-    }
     public void UdpListenForIncomingRequest()
     {
         try
@@ -297,7 +296,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
         {
             case MessageIdUdp.AdventurePlayerPositionToServer:
                 stAdventurePlayerPositionToServer position = Utilities.GetObjectFromByte<stAdventurePlayerPositionToServer>(msgData);
-                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerPositionChanged(GameRoomType.AdventureRoom,
+                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerPositionChanged(
                     position.RoomId, position.PlayerPosition);
                 break;
         }

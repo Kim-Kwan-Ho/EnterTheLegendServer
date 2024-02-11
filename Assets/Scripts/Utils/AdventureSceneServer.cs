@@ -32,6 +32,8 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
         EventAdventureScene.OnRequestMatch += Event_RequestMatch;
         EventAdventureScene.OnPlayerLoaded += Event_PlayerLoaded;
         EventAdventureScene.OnPlayerPositionChanged += Event_PlayerPositionChanged;
+        EventAdventureScene.OnPlayerStateChanged += Event_PlayerStateChanged;
+        EventAdventureScene.OnPlayerDirectionChanged += Event_PlayerDirectionChanged;
     }
 
     private void OnDisable()
@@ -39,6 +41,8 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
         EventAdventureScene.OnRequestMatch -= Event_RequestMatch;
         EventAdventureScene.OnPlayerLoaded -= Event_PlayerLoaded;
         EventAdventureScene.OnPlayerPositionChanged -= Event_PlayerPositionChanged;
+        EventAdventureScene.OnPlayerStateChanged -= Event_PlayerStateChanged;
+        EventAdventureScene.OnPlayerDirectionChanged -= Event_PlayerDirectionChanged;
     }
 
     private void Update()
@@ -70,7 +74,21 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
         AdventurePlayerPositionChangedArgs adventurePlayerPositionChangedArgs)
     {
         _adventureRoomDic[adventurePlayerPositionChangedArgs.roomId]
-            .GetPlayerChangedPositions(adventurePlayerPositionChangedArgs.playerPosition);
+            .PlayerPositionChanged(adventurePlayerPositionChangedArgs.playerPosition);
+    }
+
+    private void Event_PlayerStateChanged(AdventureSceneEvent adventureSceneEvent,
+        AdventurePlayerStateChangedArgs adventurePlayerStateChangedArgs)
+    {
+        _adventureRoomDic[adventurePlayerStateChangedArgs.roomId]
+            .PlayerStateChanged(adventurePlayerStateChangedArgs.playerIndex, adventurePlayerStateChangedArgs.state);
+
+    }
+    private void Event_PlayerDirectionChanged(AdventureSceneEvent adventureSceneEvent,
+        AdventurePlayerDirectionChangedArgs adventurePlayerDirectionChangedArgs)
+    {
+        _adventureRoomDic[adventurePlayerDirectionChangedArgs.roomId]
+            .PlayerDirectionChanged(adventurePlayerDirectionChangedArgs.playerIndex, adventurePlayerDirectionChangedArgs.direction);
     }
     private Task AdventureMatchMakingSystem()
     {
@@ -137,7 +155,7 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
             {
                 foreach (var value in _adventureRoomDic.Values)
                 {
-                    value.UpdatePlayerPositions();
+                    value.SendPlayerPositions();
                 }
             }
             else
