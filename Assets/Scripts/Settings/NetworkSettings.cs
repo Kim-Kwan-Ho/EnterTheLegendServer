@@ -10,11 +10,7 @@ namespace StandardData
         public const int MaxNameSize = 10;
     }
 
-    public static class GameRoomSize
-    {
-        public const int BattleRoomSize = 4;
-        public const int AdventureRoomSize = 3;
-    }
+
     public static class MessageIdTcp
     {
         public const ushort RequestForMatch = 1;
@@ -39,12 +35,6 @@ namespace StandardData
     public static class UdpSendCycle
     {
         public const float AdventureRoomSendCycle = 0.016f;
-    }
-    public enum GameRoomType
-    {
-        BattleRoom,
-        AdventureRoom,
-
     }
 
 

@@ -31,3 +31,9 @@ public enum AdventureSceneState
     ClearFailed,
     ClearSucceed
 }
+
+public enum GameRoomType
+{
+    BattleRoom,
+    AdventureRoom,
+}

@@ -4,13 +4,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using PimDeWitte.UnityMainThreadDispatcher;
+using TMPro;
+using TMPro.EditorUtilities;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ServerManager : SingletonMonobehaviour<ServerManager>
 {
-
     private Thread _connectListenerThread = null;
     private Thread _tcpListenerThread = null;
     private Thread _udpListenerThread = null;
@@ -21,29 +25,40 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
     private UdpClient _udpReceive = null;
 
 
-    public bool ServerReady = false;
     private List<NetworkModule> _connectedClients = new List<NetworkModule>();
     private List<NetworkModule> _disConnectedClients = new List<NetworkModule>();
-    public string IP = "127.0.0.1";
-    public int Port = 9001;
-    public ushort UdpPort = 9002;
-    public ushort UdpIndex = 1;
 
-    private void Start()
+
+
+    [Header("InputFields")]
+    [SerializeField] 
+    private TMP_InputField _ipInputField;
+    [SerializeField]
+    private TMP_InputField _portInputField;
+    [SerializeField]
+    private TMP_InputField _udpPortInputField;
+    [SerializeField] 
+    private TextMeshProUGUI _clientsCountText;
+
+    private string _ip;
+    private ushort _port;
+    private ushort _udpPort;
+    private ushort _udpIndex = 1;
+
+
+    public void OpenServer()
     {
-        Init();
-    }
+        if (_tcpListener != null)
+            return;
+
+        Debug.Log("Server Opened");
 
 
-
-    public void Init()
-    {
-        CreateServer();
-    }
+        _ip = _ipInputField.text;
+        _port = Convert.ToUInt16(_portInputField.text);
+        _udpPort = Convert.ToUInt16(_udpPortInputField.text);
 
 
-    private void CreateServer()
-    {
         _connectListenerThread = new Thread(new ThreadStart(ListenForIncomingRequest));
         _connectListenerThread.IsBackground = true;
         _connectListenerThread.Start();
@@ -61,34 +76,30 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
     {
         try
         {
-            _tcpListener = new TcpListener(IPAddress.Any, Port);
+            _tcpListener = new TcpListener(IPAddress.Any, _port);
             _tcpListener.Start();
-
-            ServerReady = true;
-
             while (true)
             {
-                if (!ServerReady)
-                    break;
 
                 if (_tcpListener.Pending())
                 {
 
-                    TestDebugLog.DebugLog("Client" + UdpIndex + " Connected");
+                    TestDebugLog.DebugLog("Client" + _udpIndex + " Connected");
                     NetworkModule client = new NetworkModule(_tcpListener.AcceptTcpClient(),
-                        new IPEndPoint(IPAddress.Parse(IP), UdpPort + UdpIndex),
-                        "Client_" + UdpIndex.ToString());
+                        new IPEndPoint(IPAddress.Parse(_ip), _udpPort + _udpIndex),
+                        "Client_" + _udpIndex.ToString());
 
                     stSetUdpPort setUdpPort = new stSetUdpPort();
                     setUdpPort.Header.MsgID = MessageIdTcp.SetUdpPort;
                     setUdpPort.Header.PacketSize = (ushort)Marshal.SizeOf(setUdpPort);
-                    setUdpPort.Name = "Client_" + UdpIndex.ToString();
-                    setUdpPort.UdpPortSend = UdpPort;
-                    setUdpPort.UdpPortReceive = (ushort)(UdpPort + UdpIndex);
+                    setUdpPort.Name = "Client_" + _udpIndex.ToString();
+                    setUdpPort.UdpPortSend = _udpPort;
+                    setUdpPort.UdpPortReceive = (ushort)(_udpPort + _udpIndex);
                     byte[] msg = Utilities.GetObjectToByte(setUdpPort);
                     client.SendTcpMessage(msg);
                     _connectedClients.Add(client);
-                    UdpIndex++;
+                    UnityMainThreadDispatcher.Instance().Enqueue(() =>_clientsCountText.text = _connectedClients.Count.ToString());
+                    _udpIndex++;
                 }
 
                 foreach (NetworkModule client in _connectedClients)
@@ -107,7 +118,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                     _disConnectedClients[i].CloseModule();
                     _connectedClients.Remove(_disConnectedClients[i]);
                     _disConnectedClients.Remove(_disConnectedClients[i]);
-
+                    UnityMainThreadDispatcher.Instance().Enqueue(() => _clientsCountText.text = _connectedClients.Count.ToString());
                 }
 
                 Thread.Sleep(10);
@@ -235,16 +246,11 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
     
     public void CloseSocket()
     {
-        if (!ServerReady)
-        {
-            return;
-        }
 
         if (_tcpListener != null)
         {
             _tcpListener.Stop();
             _tcpListener = null;
-            ServerReady = false;
             _connectListenerThread.Abort();
             _connectListenerThread = null;
             _tcpListenerThread.Abort();
@@ -275,10 +281,10 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
     {
         try
         {
-            _udpReceive = new UdpClient(UdpPort);
+            _udpReceive = new UdpClient(_udpPort);
             while (true)
             {
-                IPEndPoint IPEndPointReceive = new IPEndPoint(IPAddress.Any, UdpPort);
+                IPEndPoint IPEndPointReceive = new IPEndPoint(IPAddress.Any, _udpPort);
                 byte[] udpBuffer = _udpReceive.Receive(ref IPEndPointReceive);
                 stHeaderUdp header = Utilities.GetObjectFromByte<stHeaderUdp>(udpBuffer);
                 UdpIncomingDataProcess(header.MsgID, udpBuffer);
@@ -302,4 +308,25 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
         }
     }
 
+
+#if UNITY_EDITOR
+    protected override void OnBindField()
+    {
+        base.OnBindField();
+        _ipInputField = GameObject.Find("IpInputField").GetComponent<TMP_InputField>();
+        _portInputField = GameObject.Find("PortInputField").GetComponent<TMP_InputField>();
+        _udpPortInputField = GameObject.Find("UdpPortInputField").GetComponent<TMP_InputField>();
+        _clientsCountText = GameObject.Find("ClientsCountText").GetComponent<TextMeshProUGUI>();
+
+    }
+
+    private void OnValidate()
+    {
+        CheckNullValue(this.name, _ipInputField);
+        CheckNullValue(this.name, _portInputField);
+        CheckNullValue(this.name, _udpPortInputField);
+        CheckNullValue(this.name, _clientsCountText);
+    }
+
+#endif
 }

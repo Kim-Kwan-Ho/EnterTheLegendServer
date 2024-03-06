@@ -21,6 +21,7 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
     private ManualResetEventSlim _adventureRoomAddedEvent = new ManualResetEventSlim(false);
 
 
+
     private void Start()
     {
         Task.Run(AdventureMatchMakingSystem);
