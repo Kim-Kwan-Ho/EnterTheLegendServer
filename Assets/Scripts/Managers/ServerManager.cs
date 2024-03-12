@@ -201,9 +201,13 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
     {
         switch (msgId)
         {
+            case MessageIdTcp.RequestPlayerData:
+                stRequestPlayerData requestPlayerData = Utilities.GetObjectFromByte<stRequestPlayerData>(msgData);
+                DBManager.Instance.EventDB.CallRequestData(_connectedClients[c], requestPlayerData.Id);
+                break;
             case MessageIdTcp.RequestForMatch:
-                stRequestForMatch request = Utilities.GetObjectFromByte<stRequestForMatch>(msgData);
-                AdventureSceneServer.Instance.EventAdventureScene.CallRequestAdventureMatch((GameRoomType)request.MatchType, _connectedClients[c]);
+                stRequestForMatch requestMatch = Utilities.GetObjectFromByte<stRequestForMatch>(msgData);
+                AdventureSceneServer.Instance.EventAdventureScene.CallRequestAdventureMatch((GameRoomType)requestMatch.MatchType, _connectedClients[c]);
                 break;
             case MessageIdTcp.AdventurePlayerLoadInfo:
                 stAdventureRoomPlayerLoadInfo roomLoaded = Utilities.GetObjectFromByte<stAdventureRoomPlayerLoadInfo>(msgData);

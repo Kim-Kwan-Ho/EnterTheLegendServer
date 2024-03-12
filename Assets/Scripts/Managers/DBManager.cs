@@ -6,10 +6,17 @@ using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
 using TMPro;
 using StandardData;
+using System.Data;
+using System.Runtime.InteropServices;
 
+[RequireComponent(typeof(DBEvent))]
 public class DBManager : SingletonMonobehaviour<DBManager>
 {
     private MySqlConnection _connection = null;
+
+
+    [SerializeField]
+    public DBEvent EventDB;
 
     [Header("InputFields")]
     [SerializeField]
@@ -19,20 +26,34 @@ public class DBManager : SingletonMonobehaviour<DBManager>
     [SerializeField]
     private TMP_InputField _dbIdInputField;
     [SerializeField]
-    private TMP_InputField _passwordInputField;
+    private TMP_InputField _dbPasswordInputField;
 
 
     private string _ip;
     private string _dbName;
-    private ushort _dbId;
-    private ushort _dbPassword;
+    private string _dbId;
+    private string _dbPassword;
 
+    protected override void Awake()
+    {
+        base.Awake();
+        EventDB.OnRequestData += GetPlayerDataAsync;
+    }
+
+    private void OnDisable()
+    {
+        EventDB.OnRequestData -= GetPlayerDataAsync;
+    }
 
     public void OpenDB()
     {
+        _ip = _ipInputField.text;
+        _dbName = _dbNameInputField.text;
+        _dbId = _dbIdInputField.text;
+        _dbPassword = _dbPasswordInputField.text;
         if (_connection != null)
             return;
-        string conStr = string.Format($"Server={_ip};DataBase={_dbName};Uid={_dbId};Pwd={_dbPassword};");
+        string conStr = string.Format($"Server=localhost;DataBase={_dbName};Uid={_dbId};Pwd={_dbPassword};");
         try
         {
             _connection = new MySqlConnection(conStr);
@@ -46,63 +67,117 @@ public class DBManager : SingletonMonobehaviour<DBManager>
         }
     }
 
-    public async Task<bool> LoginAsync(string id, string pwd) // 로그인
+    public async void GetPlayerDataAsync(DBEvent dbEvent, DBRequestPlayerDataEventArgs dbRequestPlayerDataEventArgs) // 로그인
     {
+        string id = dbRequestPlayerDataEventArgs.id;
         MySqlCommand cmd = new MySqlCommand();
         cmd.Connection = _connection;
-        cmd.CommandText = $"SELECT password FROM playerinfo WHERE Id = '{id}'"; // id에 맞는 비밀번호 가져오기
+        cmd.CommandText = $"SELECT * FROM playerinfo WHERE Id = '{id}'"; 
         var result = await cmd.ExecuteScalarAsync();
-        if (result == null) // 정보가 없을경우 실패 반환
-            return false;
-        else
-            return (string)result == pwd; // 비밀번호가 맞는지 여부 반환
+        if (result == null) // 정보가 없을경우 플레이어 데이터 추가
+        {
+            await AddPlayerDataAsync(id);
+        }
+
+        stResponsePlayerData data = new stResponsePlayerData();
+        data.Header.MsgID = MessageIdTcp.ResponsePlayerData;
+        data.Header.PacketSize = (ushort)Marshal.SizeOf(data);
+        DataSet ds = new DataSet();
+        cmd.Connection = _connection;
+
+        // 플레이어 정보
+        cmd.CommandText = $"SELECT * FROM playerinfo WHERE Id = '{id}';";
+        MySqlDataAdapter adapter = new MySqlDataAdapter(cmd);
+        adapter.Fill(ds, "playerinfo");
+        data.Nickname = (string)ds.Tables[0].Rows[0]["Nickname"];
+        data.Credit = (int)ds.Tables[0].Rows[0]["Credit"];
+        data.Gold = (int)ds.Tables[0].Rows[0]["Gold"];
+
+
+
+        // 착용중인 아이템
+        cmd.CommandText = $"SELECT * FROM playerequipeditem WHERE Id = '{id}';";
+        adapter = new MySqlDataAdapter(cmd);
+        adapter.Fill(ds, "playerequipeditem");
+        int[] equipedItem = new int[NetworkSize.EquipedItemLength];
+        for (int i = 0; i < equipedItem.Length; i++)
+        {
+            equipedItem[i] = (int)ds.Tables[1].Rows[i]["ItemId"];
+        }
+        data.EquipedItems = equipedItem;
+
+
+        // 보유중인 아이템
+        cmd.CommandText = $"SELECT * FROM playeritem WHERE Id = '{id}';";
+        adapter = new MySqlDataAdapter(cmd);
+        adapter.Fill(ds, "playeritem");
+        int[] playerItems = new int[ds.Tables[2].Rows.Count];
+        data.ItemCount = (ushort)playerItems.Length;
+        for (int i = 0; i < playerItems.Length; i++)
+        {
+            playerItems[i] = (int)ds.Tables[2].Rows[i]["ItemId"];
+        }
+        data.Items = playerItems;
+
+        byte[] msg = Utilities.GetObjectToByte(data);
+        dbRequestPlayerDataEventArgs.module.SendTcpMessage(msg);
     }
-    public async Task<bool> RegisterAsync(string id, string pwd) // 회원가입
+
+    private async Task AddPlayerDataAsync(string id) // 플레이어 데이터 추가
     {
         try
         {
             MySqlCommand cmd = new MySqlCommand();
             cmd.Connection = _connection;
-            cmd.CommandText = $"INSERT INTO playerinfo(Id,Password,Nickname,Credit,Gold) VALUES('{id}','{pwd}'," +
-                              $"'{PlayerStartSetting.Nickname}','{PlayerStartSetting.Credit}','{PlayerStartSetting.Gold}');"; // 플렝이어 정보 생성
+            cmd.CommandText = $"INSERT INTO playerinfo(Id,Nickname,Credit,Gold) VALUES('{id}'," +
+                              $"'{PlayerStartSetting.Nickname}',{PlayerStartSetting.Credit},{PlayerStartSetting.Gold});"; // 플렝이어 정보 생성
             await cmd.ExecuteNonQueryAsync();
-            return true;
+            for (int i = 0; i < NetworkSize.EquipedItemLength; i++)
+            {
+                cmd.CommandText = $"INSERT INTO playerequipeditem(Id,ItemId) VALUES('{id}',{0});";
+                await cmd.ExecuteNonQueryAsync();
+            }
+            for (int i = 0; i < PlayerStartSetting.ItemId.Length; i++)
+            {
+                cmd.CommandText = $"INSERT INTO playeritem(Id,ItemId) VALUES('{id}',{PlayerStartSetting.ItemId[i]});";
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
         catch (MySqlException e)
         {
-            if (e.Number == 1062) // 해당 아이디가 있을 경우 실패 반환
-            {
-                return false;
-            }
-            else
-            {
-                Debug.Log(e);
-                throw;
-            }
+            Debug.Log(e);
+            throw;
         }
     }
 
-
-
-
+    private async Task ChangePlayerEquipedItem(string id, int curItemId, int targetItemId)
+    {
+        MySqlCommand cmd = new MySqlCommand();
+        cmd.Connection = _connection;
+        cmd.CommandText =
+            $"Update playerequipeditem SET ItemId = {targetItemId} WHERE Id = '{id}' AND ItemId = {curItemId};";
+        await cmd.ExecuteNonQueryAsync();
+    }
 
 
 #if UNITY_EDITOR
     protected override void OnBindField()
     {
         base.OnBindField();
+        EventDB = GetComponent<DBEvent>();
         _ipInputField = GameObject.Find("IpInputField").GetComponent<TMP_InputField>();
         _dbNameInputField = GameObject.Find("DBNameInputField").GetComponent<TMP_InputField>();
         _dbIdInputField = GameObject.Find("DBIdInputField").GetComponent<TMP_InputField>();
-        _passwordInputField = GameObject.Find("DBPasswordInputField").GetComponent<TMP_InputField>();
+        _dbPasswordInputField = GameObject.Find("DBPasswordInputField").GetComponent<TMP_InputField>();
     }
 
     private void OnValidate()
     {
+        CheckNullValue(this.name, EventDB);
         CheckNullValue(this.name, _ipInputField);
         CheckNullValue(this.name, _dbNameInputField);
         CheckNullValue(this.name, _dbIdInputField);
-        CheckNullValue(this.name, _passwordInputField);
+        CheckNullValue(this.name, _dbPasswordInputField);
     }
 
 #endif
