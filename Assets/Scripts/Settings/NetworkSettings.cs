@@ -13,13 +13,11 @@ namespace StandardData
         public const int EquipedItemLength = 5;
         public const int MaxItemLength = 100;
         public const int MaxPasswordLength = 10;
-    }
 
+    }
 
     public static class MessageIdTcp
     {
-        public const ushort PlayerLoginToServer = 19;
-        public const ushort PlayerRegisterToServer = 20;
 
         public const ushort RequestForMatch = 1;
         public const ushort AdventureRoomLoaded = 2;
@@ -33,6 +31,8 @@ namespace StandardData
         public const ushort AdventureRoomPlayerDirectionChangedFromServer = 88;
         public const ushort RequestPlayerData = 9;
         public const ushort ResponsePlayerData = 999;
+        public const ushort PlayerEquipChanged = 10;
+
 
     }
 
@@ -42,9 +42,20 @@ namespace StandardData
         public const ushort AdventurePlayerPositionFromServer = 2;
 
     }
+
+    public static class TcpSendCycle
+    {
+    }
+
     public static class UdpSendCycle
     {
         public const float AdventureRoomSendCycle = 0.016f;
+    }
+    public enum GameRoomType
+    {
+        BattleRoom,
+        AdventureRoom,
+
     }
 
 
@@ -74,7 +85,7 @@ namespace StandardData
     public struct stRequestPlayerData
     {
         public stHeaderTcp Header;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = NetworkSize.MaxPlayerNameLength)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = NetworkSize.MaxIdLength)]
         public string Id;
     }
 
@@ -83,7 +94,7 @@ namespace StandardData
     public struct stResponsePlayerData
     {
         public stHeaderTcp Header;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = NetworkSize.MaxIdLength)]
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = NetworkSize.MaxPlayerNameLength)]
         public string Nickname;
         [MarshalAs(UnmanagedType.U4, SizeConst = 4)]
         public int Credit;
@@ -96,6 +107,19 @@ namespace StandardData
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = NetworkSize.MaxItemLength)]
         public int[] Items;
     }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct stPlayerEquipChangedInfo
+    {
+        public stHeaderTcp Header;
+        [MarshalAs(UnmanagedType.U4, SizeConst = 4)]
+        public int BeforeItem;
+        [MarshalAs(UnmanagedType.U4, SizeConst = 4)]
+        public int AfterItem;
+
+    }
+
+
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct stRequestForMatch

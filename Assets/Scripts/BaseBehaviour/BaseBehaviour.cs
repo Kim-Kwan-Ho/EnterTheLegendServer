@@ -95,6 +95,7 @@ public class BehaviourBaseEditor : UnityEditor.Editor
         if (GUILayout.Button("Bind Objects")) 
         {
             _bindMethod.Invoke(target ,new object[]{}); 
+            EditorUtility.SetDirty(target);
         }
         base.OnInspectorGUI();
 

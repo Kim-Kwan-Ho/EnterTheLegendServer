@@ -29,7 +29,7 @@ public class AdventureRoom
         for (ushort i = 0; i < _players.Length; i++)
         {
             //_playerPositions.PlayerPosition[i].PlayerIndex = i;
-            playersInfo[i].Name = _players[i].Module.Name;
+            playersInfo[i].Name = _players[i].Module.Nickname;
             playersInfo[i].Index = i;
         }
 

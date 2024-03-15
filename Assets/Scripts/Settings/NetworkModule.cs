@@ -20,10 +20,17 @@ public class NetworkModule
     {
         get { return _stream; }
     }
-    private string _name;
-    public string Name
+    private string _id;
+    public string Id
     {
-        get { return this._name; }
+        get { return this._id; }
+    }
+
+    private string _nickname;
+
+    public string Nickname
+    {
+        get { return this._nickname; }
     }
     private IPEndPoint _ipEndPoint;
 
@@ -56,9 +63,19 @@ public class NetworkModule
     {
         _tcpSocket = clientSocket;
         _stream = _tcpSocket.GetStream();
-        _name = name;
+        _id = name;
         _ipEndPoint = ipEndPoint;
         _udpSocket = new UdpClient();
+    }
+
+    public void SetId(string id)
+    {
+        _id = id;
+    }
+
+    public void SetNickname(string nickname)
+    {
+        _nickname = nickname;
     }
     public void SetIsTempByte(bool isTempByte)
     {

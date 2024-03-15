@@ -4226,7 +4226,7 @@ MonoBehaviour:
   _ipInputField: {fileID: 68102225}
   _dbNameInputField: {fileID: 1307401334}
   _dbIdInputField: {fileID: 2020246671}
-  _passwordInputField: {fileID: 1805439453}
+  _dbPasswordInputField: {fileID: 1805439453}
 --- !u!114 &1685048198
 MonoBehaviour:
   m_ObjectHideFlags: 0

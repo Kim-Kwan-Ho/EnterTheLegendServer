@@ -205,6 +205,11 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                 stRequestPlayerData requestPlayerData = Utilities.GetObjectFromByte<stRequestPlayerData>(msgData);
                 DBManager.Instance.EventDB.CallRequestData(_connectedClients[c], requestPlayerData.Id);
                 break;
+            case MessageIdTcp.PlayerEquipChanged:
+                stPlayerEquipChangedInfo equipChangedInfo =
+                    Utilities.GetObjectFromByte<stPlayerEquipChangedInfo>(msgData);
+                DBManager.Instance.EventDB.CallPlayerEquipChanged(_connectedClients[c].Id, equipChangedInfo.BeforeItem, equipChangedInfo.AfterItem);
+                break;
             case MessageIdTcp.RequestForMatch:
                 stRequestForMatch requestMatch = Utilities.GetObjectFromByte<stRequestForMatch>(msgData);
                 AdventureSceneServer.Instance.EventAdventureScene.CallRequestAdventureMatch((GameRoomType)requestMatch.MatchType, _connectedClients[c]);
@@ -216,7 +221,6 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
             case MessageIdTcp.AdventureRoomPlayerStateChangedToServer:
                 stAdventureRoomPlayerStateChangedToServer stateChanged =
                     Utilities.GetObjectFromByte<stAdventureRoomPlayerStateChangedToServer>(msgData);
-                TestDebugLog.DebugLog(("Name: " + _connectedClients[c].Name + " State: " + (State)stateChanged.State));
 
                 AdventureSceneServer.Instance.EventAdventureScene.CallPlayerStateChanged(stateChanged.PlayerInfo.RoomId,
                     stateChanged.PlayerInfo.PlayerIndex, stateChanged.State);
@@ -224,7 +228,6 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
             case MessageIdTcp.AdventureRoomPlayerDirectionChangedToServer:
                 stAdventureRoomPlayerDirectionChangedToServer directionChanged =
                     Utilities.GetObjectFromByte<stAdventureRoomPlayerDirectionChangedToServer>(msgData);
-                TestDebugLog.DebugLog(("Name: " + _connectedClients[c].Name + " State: " + (Direction)directionChanged.Direction));
                 AdventureSceneServer.Instance.EventAdventureScene.CallPlayerDirectionChanged(directionChanged.PlayerInfo.RoomId,
                     directionChanged.PlayerInfo.PlayerIndex, directionChanged.Direction);
                 break;

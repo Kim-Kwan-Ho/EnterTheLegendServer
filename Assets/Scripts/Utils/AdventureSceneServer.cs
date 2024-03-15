@@ -137,12 +137,12 @@ public class AdventureSceneServer : SingletonMonobehaviour<AdventureSceneServer>
         while (_adventureMatchingQueue.Count > 0)
         {
             _adventureMatchingQueue.TryDequeue(out NetworkModule player);
-            if (!_adventureCanceledMatch.Contains(player.Name))
+            if (!_adventureCanceledMatch.Contains(player.Id))
             {
                 playerInfo.Module = player;
                 return playerInfo;
             }
-            _adventureCanceledMatch.Remove(player.Name);
+            _adventureCanceledMatch.Remove(player.Id);
         }
         return playerInfo;
     }

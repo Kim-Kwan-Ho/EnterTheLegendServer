@@ -37,12 +37,14 @@ public class DBManager : SingletonMonobehaviour<DBManager>
     protected override void Awake()
     {
         base.Awake();
-        EventDB.OnRequestData += GetPlayerDataAsync;
+        EventDB.OnRequestData += Event_GetPlayerDataAsync;
+        EventDB.OnPlayerEquipChanged += Event_ChangePlayerEquipItem;
     }
 
     private void OnDisable()
     {
-        EventDB.OnRequestData -= GetPlayerDataAsync;
+        EventDB.OnRequestData -= Event_GetPlayerDataAsync;
+        EventDB.OnPlayerEquipChanged -= Event_ChangePlayerEquipItem;
     }
 
     public void OpenDB()
@@ -63,11 +65,10 @@ public class DBManager : SingletonMonobehaviour<DBManager>
         catch (Exception e)
         {
             Debug.Log(e);
-            throw;
         }
     }
 
-    public async void GetPlayerDataAsync(DBEvent dbEvent, DBRequestPlayerDataEventArgs dbRequestPlayerDataEventArgs) // 로그인
+    private async void Event_GetPlayerDataAsync(DBEvent dbEvent, DBRequestPlayerDataEventArgs dbRequestPlayerDataEventArgs) // 로그인
     {
         string id = dbRequestPlayerDataEventArgs.id;
         MySqlCommand cmd = new MySqlCommand();
@@ -120,6 +121,8 @@ public class DBManager : SingletonMonobehaviour<DBManager>
         data.Items = playerItems;
 
         byte[] msg = Utilities.GetObjectToByte(data);
+        dbRequestPlayerDataEventArgs.module.SetId(dbRequestPlayerDataEventArgs.id);
+        dbRequestPlayerDataEventArgs.module.SetNickname(data.Nickname);
         dbRequestPlayerDataEventArgs.module.SendTcpMessage(msg);
     }
 
@@ -150,12 +153,12 @@ public class DBManager : SingletonMonobehaviour<DBManager>
         }
     }
 
-    private async Task ChangePlayerEquipedItem(string id, int curItemId, int targetItemId)
+    private async void Event_ChangePlayerEquipItem(DBEvent dbEvent, DBPlayerEquipChangedEventArgs playerEquipChangedEventArgs )
     {
         MySqlCommand cmd = new MySqlCommand();
         cmd.Connection = _connection;
         cmd.CommandText =
-            $"Update playerequipeditem SET ItemId = {targetItemId} WHERE Id = '{id}' AND ItemId = {curItemId};";
+            $"Update playerequipeditem SET ItemId = {playerEquipChangedEventArgs.afterItem} WHERE Id = '{playerEquipChangedEventArgs.id}' AND ItemId = {playerEquipChangedEventArgs.beforeItem};";
         await cmd.ExecuteNonQueryAsync();
     }
 
