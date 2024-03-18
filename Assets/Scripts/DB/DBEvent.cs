@@ -12,14 +12,13 @@ public class DBEvent : MonoBehaviour
         OnRequestData?.Invoke(this, new DBRequestPlayerDataEventArgs() { module = module, id = id });
     }
 
-    public void CallPlayerEquipChanged(string id, int beforeItem, int afterItem)
+    public void CallPlayerEquipChanged(string id,ushort itemType ,int afterItem)
     {
         OnPlayerEquipChanged?.Invoke(this, new DBPlayerEquipChangedEventArgs()
         {
             id = id,
+            itemType = itemType,
             afterItem = afterItem,
-            beforeItem = beforeItem
-
         });
     }
 }
@@ -32,6 +31,6 @@ public class DBRequestPlayerDataEventArgs
 public class DBPlayerEquipChangedEventArgs
 {
     public string id;
-    public int beforeItem;
+    public ushort itemType;
     public int afterItem;
 }

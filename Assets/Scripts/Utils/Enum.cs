@@ -37,3 +37,12 @@ public enum GameRoomType
     BattleRoom,
     AdventureRoom,
 }
+
+public enum EquipmentType
+{
+    Character,
+    Weapon,
+    Helmet,
+    Armor,
+    Shoes
+}

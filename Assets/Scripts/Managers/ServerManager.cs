@@ -208,7 +208,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
             case MessageIdTcp.PlayerEquipChanged:
                 stPlayerEquipChangedInfo equipChangedInfo =
                     Utilities.GetObjectFromByte<stPlayerEquipChangedInfo>(msgData);
-                DBManager.Instance.EventDB.CallPlayerEquipChanged(_connectedClients[c].Id, equipChangedInfo.BeforeItem, equipChangedInfo.AfterItem);
+                DBManager.Instance.EventDB.CallPlayerEquipChanged(_connectedClients[c].Id, equipChangedInfo.ItemType , equipChangedInfo.AfterItem);
                 break;
             case MessageIdTcp.RequestForMatch:
                 stRequestForMatch requestMatch = Utilities.GetObjectFromByte<stRequestForMatch>(msgData);

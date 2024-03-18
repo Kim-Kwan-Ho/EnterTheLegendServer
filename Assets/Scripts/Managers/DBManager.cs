@@ -137,12 +137,12 @@ public class DBManager : SingletonMonobehaviour<DBManager>
             await cmd.ExecuteNonQueryAsync();
             for (int i = 0; i < NetworkSize.EquipedItemLength; i++)
             {
-                cmd.CommandText = $"INSERT INTO playerequipeditem(Id,ItemId) VALUES('{id}',{0});";
+                cmd.CommandText = $"INSERT INTO playerequipeditem(Id,ItemType,ItemId) VALUES('{id}',{i},{0});";
                 await cmd.ExecuteNonQueryAsync();
             }
-            for (int i = 0; i < PlayerStartSetting.ItemId.Length; i++)
+            for (int i = 0; i < PlayerStartSetting.StartItems.Length; i++)
             {
-                cmd.CommandText = $"INSERT INTO playeritem(Id,ItemId) VALUES('{id}',{PlayerStartSetting.ItemId[i]});";
+                cmd.CommandText = $"INSERT INTO playeritem(Id,ItemId) VALUES('{id}',{PlayerStartSetting.StartItems[i]});";
                 await cmd.ExecuteNonQueryAsync();
             }
         }
@@ -158,7 +158,7 @@ public class DBManager : SingletonMonobehaviour<DBManager>
         MySqlCommand cmd = new MySqlCommand();
         cmd.Connection = _connection;
         cmd.CommandText =
-            $"Update playerequipeditem SET ItemId = {playerEquipChangedEventArgs.afterItem} WHERE Id = '{playerEquipChangedEventArgs.id}' AND ItemId = {playerEquipChangedEventArgs.beforeItem};";
+            $"Update playerequipeditem SET ItemId = {playerEquipChangedEventArgs.afterItem} WHERE Id = '{playerEquipChangedEventArgs.id}' AND ItemType = {playerEquipChangedEventArgs.itemType};";
         await cmd.ExecuteNonQueryAsync();
     }
 
