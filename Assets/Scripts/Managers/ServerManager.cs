@@ -144,7 +144,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                 if (_connectedClients[c].IsConnected())
                 {
                     _theStream = _connectedClients[c].Stream;
-                    if (_theStream is { DataAvailable: true } )
+                    if (_theStream is { DataAvailable: true } && _connectedClients[c].IsConnected())
                     {
                         int length = 0;
                         if ((length = _theStream.Read(_connectedClients[c].Bytes, 0,
@@ -212,23 +212,23 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                 break;
             case MessageIdTcp.RequestForMatch:
                 stRequestForMatch requestMatch = Utilities.GetObjectFromByte<stRequestForMatch>(msgData);
-                AdventureSceneServer.Instance.EventAdventureScene.CallRequestAdventureMatch((GameRoomType)requestMatch.MatchType, _connectedClients[c]);
+                TeamBattleSceneServer.Instance.EventTeamBattleScene.CallRequestTeamBattleMatch((GameRoomType)requestMatch.MatchType, _connectedClients[c]);
                 break;
-            case MessageIdTcp.AdventurePlayerLoadInfo:
-                stAdventureRoomPlayerLoadInfo roomLoaded = Utilities.GetObjectFromByte<stAdventureRoomPlayerLoadInfo>(msgData);
-                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerLoaded(roomLoaded.RoomId, roomLoaded.PlayerIndex);
+            case MessageIdTcp.TeamBattlePlayerLoadInfo:
+                stTeamBattleRoomPlayerLoadInfo roomLoaded = Utilities.GetObjectFromByte<stTeamBattleRoomPlayerLoadInfo>(msgData);
+                TeamBattleSceneServer.Instance.EventTeamBattleScene.CallPlayerLoaded(roomLoaded.RoomId, roomLoaded.PlayerIndex);
                 break;
-            case MessageIdTcp.AdventureRoomPlayerStateChangedToServer:
-                stAdventureRoomPlayerStateChangedToServer stateChanged =
-                    Utilities.GetObjectFromByte<stAdventureRoomPlayerStateChangedToServer>(msgData);
+            case MessageIdTcp.TeamBattleRoomPlayerStateChangedToServer:
+                stTeamBattleRoomPlayerStateChangedToServer stateChanged =
+                    Utilities.GetObjectFromByte<stTeamBattleRoomPlayerStateChangedToServer>(msgData);
 
-                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerStateChanged(stateChanged.PlayerInfo.RoomId,
+                TeamBattleSceneServer.Instance.EventTeamBattleScene.CallPlayerStateChanged(stateChanged.PlayerInfo.RoomId,
                     stateChanged.PlayerInfo.PlayerIndex, stateChanged.State);
                 break;
-            case MessageIdTcp.AdventureRoomPlayerDirectionChangedToServer:
-                stAdventureRoomPlayerDirectionChangedToServer directionChanged =
-                    Utilities.GetObjectFromByte<stAdventureRoomPlayerDirectionChangedToServer>(msgData);
-                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerDirectionChanged(directionChanged.PlayerInfo.RoomId,
+            case MessageIdTcp.TeamBattleRoomPlayerDirectionChangedToServer:
+                stTeamBattleRoomPlayerDirectionChangedToServer directionChanged =
+                    Utilities.GetObjectFromByte<stTeamBattleRoomPlayerDirectionChangedToServer>(msgData);
+                TeamBattleSceneServer.Instance.EventTeamBattleScene.CallPlayerDirectionChanged(directionChanged.PlayerInfo.RoomId,
                     directionChanged.PlayerInfo.PlayerIndex, directionChanged.Direction);
                 break;
             default:
@@ -307,9 +307,9 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
     {
         switch (msgId)
         {
-            case MessageIdUdp.AdventurePlayerPositionToServer:
-                stAdventurePlayerPositionToServer position = Utilities.GetObjectFromByte<stAdventurePlayerPositionToServer>(msgData);
-                AdventureSceneServer.Instance.EventAdventureScene.CallPlayerPositionChanged(
+            case MessageIdUdp.TeamBattlePlayerPositionToServer:
+                stTeamBattlePlayerPositionToServer position = Utilities.GetObjectFromByte<stTeamBattlePlayerPositionToServer>(msgData);
+                TeamBattleSceneServer.Instance.EventTeamBattleScene.CallPlayerPositionChanged(
                     position.RoomId, position.PlayerPosition);
                 break;
         }

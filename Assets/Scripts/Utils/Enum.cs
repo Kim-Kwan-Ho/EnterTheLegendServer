@@ -22,7 +22,7 @@ public enum State
     Death = 6
 }
 
-public enum AdventureSceneState
+public enum GameSceneState
 {
     Loading,
     WaitingPlayer,
@@ -34,8 +34,9 @@ public enum AdventureSceneState
 
 public enum GameRoomType
 {
-    BattleRoom,
-    AdventureRoom,
+    Duel,
+    TeamBattle,
+    TrioDefense
 }
 
 public enum EquipmentType

@@ -3,7 +3,7 @@ namespace StandardData
     public static class GameRoomSize
     {
         public const int BattleRoomSize = 4;
-        public const int AdventureRoomSize = 3;
+        public const int TeamBattleRoomSize = 6;
     }
 
     public static class PlayerStartSetting

@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using StandardData;
 using UnityEngine;
 
-public class AdventureRoom
+public class TeamBattleRoom
 {
 
     [Header("RoomInfo")]
@@ -12,19 +12,19 @@ public class AdventureRoom
     private ushort _roomId;
     public ushort RoomId { get { return _roomId; } }
 
-    private AdventureRoomPlayerInfo[] _players;
+    private TeamBattleRoomPlayerInfo[] _players;
 
     private bool _gameStarted;
 
 
-    public AdventureRoom(AdventureRoomPlayerInfo[] players)
+    public TeamBattleRoom(TeamBattleRoomPlayerInfo[] players)
     {
         _players = players;
         _gameStarted = false;
         _roomId = _roomIndex;
         _roomIndex++;
 
-        stAdventurePlayerInfo[] playersInfo = new stAdventurePlayerInfo[_players.Length];
+        stTeamBattlePlayerInfo[] playersInfo = new stTeamBattlePlayerInfo[_players.Length];
 
         for (ushort i = 0; i < _players.Length; i++)
         {
@@ -33,13 +33,13 @@ public class AdventureRoom
             playersInfo[i].Index = i;
         }
 
-        stCreateAdventureRoom createAdventureRoom = new stCreateAdventureRoom();
-        createAdventureRoom.Header.MsgID = MessageIdTcp.CreateAdventureRoom;
-        createAdventureRoom.Header.PacketSize = (ushort)Marshal.SizeOf(createAdventureRoom);
-        createAdventureRoom.RoomId = _roomId;
-        createAdventureRoom.playersInfo = playersInfo;
-        byte[] msg = Utilities.GetObjectToByte(createAdventureRoom);
-        foreach (AdventureRoomPlayerInfo player in _players)
+        stCreateTeamBattleRoom createTeamBattleRoom = new stCreateTeamBattleRoom();
+        createTeamBattleRoom.Header.MsgID = MessageIdTcp.CreateTeamBattleRoom;
+        createTeamBattleRoom.Header.PacketSize = (ushort)Marshal.SizeOf(createTeamBattleRoom);
+        createTeamBattleRoom.RoomId = _roomId;
+        createTeamBattleRoom.playersInfo = playersInfo;
+        byte[] msg = Utilities.GetObjectToByte(createTeamBattleRoom);
+        foreach (TeamBattleRoomPlayerInfo player in _players)
         {
             player.Module.SendTcpMessage(msg);
         }
@@ -55,13 +55,13 @@ public class AdventureRoom
         }
 
         _gameStarted = true;
-        stAdventureRoomLoadInfo loadSucceed = new stAdventureRoomLoadInfo();
-        loadSucceed.Header.MsgID = MessageIdTcp.AdventureRoomLoadInfo;
+        stTeamBattleRoomLoadInfo loadSucceed = new stTeamBattleRoomLoadInfo();
+        loadSucceed.Header.MsgID = MessageIdTcp.TeamBattleRoomLoadInfo;
         loadSucceed.Header.PacketSize = (ushort)Marshal.SizeOf(loadSucceed);
         loadSucceed.IsAllSucceed = true;
         byte[] msg = Utilities.GetObjectToByte(loadSucceed);
 
-        foreach (AdventureRoomPlayerInfo player in _players)
+        foreach (TeamBattleRoomPlayerInfo player in _players)
         {
             player.Module.SendTcpMessage(msg);
         }
@@ -74,10 +74,10 @@ public class AdventureRoom
 
     public void PlayerStateChanged(ushort playerIndex, ushort state)
     {
-        stAdventureRoomPlayerStateChangedFromServer
-            stateChanged = new stAdventureRoomPlayerStateChangedFromServer();
+        stTeamBattleRoomPlayerStateChangedFromServer
+            stateChanged = new stTeamBattleRoomPlayerStateChangedFromServer();
 
-        stateChanged.Header.MsgID = MessageIdTcp.AdventureRoomPlayerStateChangedFromServer;
+        stateChanged.Header.MsgID = MessageIdTcp.TeamBattleRoomPlayerStateChangedFromServer;
         stateChanged.Header.PacketSize = (ushort)Marshal.SizeOf(stateChanged);
         stateChanged.PlayerIndex = playerIndex;
         stateChanged.State = state;
@@ -91,10 +91,10 @@ public class AdventureRoom
     }
     public void PlayerDirectionChanged(ushort playerIndex, ushort direction)
     {
-        stAdventureRoomPlayerDirectionChangedFromServer
-            directionChanged = new stAdventureRoomPlayerDirectionChangedFromServer();
+        stTeamBattleRoomPlayerDirectionChangedFromServer
+            directionChanged = new stTeamBattleRoomPlayerDirectionChangedFromServer();
 
-        directionChanged.Header.MsgID = MessageIdTcp.AdventureRoomPlayerDirectionChangedFromServer;
+        directionChanged.Header.MsgID = MessageIdTcp.TeamBattleRoomPlayerDirectionChangedFromServer;
         directionChanged.Header.PacketSize = (ushort)Marshal.SizeOf(directionChanged);
         directionChanged.PlayerIndex = playerIndex;
         directionChanged.Direction = direction;
@@ -112,8 +112,8 @@ public class AdventureRoom
         if (!_gameStarted)
             return;
 
-        stAdventurePlayerPositionFromSever playerPositions = new stAdventurePlayerPositionFromSever();
-        playerPositions.Header.MsgID = MessageIdUdp.AdventurePlayerPositionFromServer;
+        stTeamBattlePlayerPositionFromSever playerPositions = new stTeamBattlePlayerPositionFromSever();
+        playerPositions.Header.MsgID = MessageIdUdp.TeamBattlePlayerPositionFromServer;
         stPlayerPosition[] positions = new stPlayerPosition[_players.Length];
         for (ushort i = 0; i < _players.Length; i++)
         {
@@ -133,7 +133,7 @@ public class AdventureRoom
 }
 
 
-public class AdventureRoomPlayerInfo
+public class TeamBattleRoomPlayerInfo
 {
     public NetworkModule Module = null;
     public bool Loaded = false;
