@@ -162,6 +162,26 @@ public class DBManager : SingletonMonobehaviour<DBManager>
         await cmd.ExecuteNonQueryAsync();
     }
 
+    public int[] GetPlayerEquipedItems(string id)
+    {
+        MySqlCommand cmd = new MySqlCommand();
+        cmd.Connection = _connection;
+        MySqlDataAdapter adapter;
+        DataSet ds = new DataSet();
+
+        cmd.CommandText = $"SELECT * FROM playerequipeditem WHERE Id = '{id}';";
+        adapter = new MySqlDataAdapter(cmd);
+        
+        adapter.Fill(ds, "playerequipeditem");
+        int[] equipedItem = new int[NetworkSize.EquipedItemLength];
+        for (int i = 0; i < equipedItem.Length; i++)
+        {
+            equipedItem[i] = (int)ds.Tables[0].Rows[i]["ItemId"];
+        }
+        return equipedItem;
+
+    }
+
 
 #if UNITY_EDITOR
     protected override void OnBindField()

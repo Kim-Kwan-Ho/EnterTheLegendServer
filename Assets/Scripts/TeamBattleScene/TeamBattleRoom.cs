@@ -24,25 +24,27 @@ public class TeamBattleRoom
         _roomId = _roomIndex;
         _roomIndex++;
 
-        stTeamBattlePlayerInfo[] playersInfo = new stTeamBattlePlayerInfo[_players.Length];
+        stBattlePlayerInfo[] playersInfo = new stBattlePlayerInfo[_players.Length];
+        
+        for (ushort i = 0; i < _players.Length; i++)
+        {
+            playersInfo[i].Index = i;
+            playersInfo[i].Nickname = _players[i].Module.Nickname;
+            playersInfo[i].EquipedItems = DBManager.Instance.GetPlayerEquipedItems(_players[i].Module.Id);
+        }
 
         for (ushort i = 0; i < _players.Length; i++)
         {
-            //_playerPositions.PlayerPosition[i].PlayerIndex = i;
-            playersInfo[i].Name = _players[i].Module.Nickname;
-            playersInfo[i].Index = i;
+            stCreateTeamBattleRoom createTeamBattleRoom = new stCreateTeamBattleRoom();
+            createTeamBattleRoom.Header.MsgID = MessageIdTcp.CreateTeamBattleRoom;
+            createTeamBattleRoom.Header.PacketSize = (ushort)Marshal.SizeOf(createTeamBattleRoom);
+            createTeamBattleRoom.RoomId = _roomId;
+            createTeamBattleRoom.PlayersInfo = playersInfo;
+            createTeamBattleRoom.PlayerIndex = i;
+            byte[] msg = Utilities.GetObjectToByte(createTeamBattleRoom);
+            _players[i].Module.SendTcpMessage(msg);
         }
 
-        stCreateTeamBattleRoom createTeamBattleRoom = new stCreateTeamBattleRoom();
-        createTeamBattleRoom.Header.MsgID = MessageIdTcp.CreateTeamBattleRoom;
-        createTeamBattleRoom.Header.PacketSize = (ushort)Marshal.SizeOf(createTeamBattleRoom);
-        createTeamBattleRoom.RoomId = _roomId;
-        createTeamBattleRoom.playersInfo = playersInfo;
-        byte[] msg = Utilities.GetObjectToByte(createTeamBattleRoom);
-        foreach (TeamBattleRoomPlayerInfo player in _players)
-        {
-            player.Module.SendTcpMessage(msg);
-        }
     }
 
     public void PlayerLoaded(ushort playerIndex)
@@ -74,10 +76,10 @@ public class TeamBattleRoom
 
     public void PlayerStateChanged(ushort playerIndex, ushort state)
     {
-        stTeamBattleRoomPlayerStateChangedFromServer
-            stateChanged = new stTeamBattleRoomPlayerStateChangedFromServer();
+        stBattleRoomPlayerStateChangedFromServer
+            stateChanged = new stBattleRoomPlayerStateChangedFromServer();
 
-        stateChanged.Header.MsgID = MessageIdTcp.TeamBattleRoomPlayerStateChangedFromServer;
+        stateChanged.Header.MsgID = MessageIdTcp.BattleRoomPlayerStateChangedFromServer;
         stateChanged.Header.PacketSize = (ushort)Marshal.SizeOf(stateChanged);
         stateChanged.PlayerIndex = playerIndex;
         stateChanged.State = state;
@@ -91,10 +93,10 @@ public class TeamBattleRoom
     }
     public void PlayerDirectionChanged(ushort playerIndex, ushort direction)
     {
-        stTeamBattleRoomPlayerDirectionChangedFromServer
-            directionChanged = new stTeamBattleRoomPlayerDirectionChangedFromServer();
+        stBattleRoomPlayerDirectionChangedFromServer
+            directionChanged = new stBattleRoomPlayerDirectionChangedFromServer();
 
-        directionChanged.Header.MsgID = MessageIdTcp.TeamBattleRoomPlayerDirectionChangedFromServer;
+        directionChanged.Header.MsgID = MessageIdTcp.BattleRoomPlayerDirectionChangedFromServer;
         directionChanged.Header.PacketSize = (ushort)Marshal.SizeOf(directionChanged);
         directionChanged.PlayerIndex = playerIndex;
         directionChanged.Direction = direction;
@@ -112,8 +114,8 @@ public class TeamBattleRoom
         if (!_gameStarted)
             return;
 
-        stTeamBattlePlayerPositionFromSever playerPositions = new stTeamBattlePlayerPositionFromSever();
-        playerPositions.Header.MsgID = MessageIdUdp.TeamBattlePlayerPositionFromServer;
+        stBattlePlayerPositionFromSever playerPositions = new stBattlePlayerPositionFromSever();
+        playerPositions.Header.MsgID = MessageIdUdp.BattlePlayerPositionFromServer;
         stPlayerPosition[] positions = new stPlayerPosition[_players.Length];
         for (ushort i = 0; i < _players.Length; i++)
         {

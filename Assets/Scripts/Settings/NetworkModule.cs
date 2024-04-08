@@ -108,7 +108,8 @@ public class NetworkModule
 
     public void SendUdpMessage(byte[] message)
     {
-        _udpSocket.Send(message, message.Length, _ipEndPoint);
+        if (_udpSocket.Client.Connected && IsConnected())
+            _udpSocket.Send(message, message.Length, _ipEndPoint);
     }
 
 

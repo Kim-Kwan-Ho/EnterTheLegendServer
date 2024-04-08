@@ -1,3 +1,4 @@
+using System;
 using StandardData;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -17,12 +18,13 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
     private ConcurrentDictionary<int, TeamBattleRoom> _teamBattleRoomDic = new ConcurrentDictionary<int, TeamBattleRoom>();
     private ManualResetEventSlim _teamBattleRoomAddedEvent = new ManualResetEventSlim(false);
 
+    private Task _updatePlayerPositionTask;
 
 
     private void Start()
     {
         Task.Run(TeamBattleMatchMakingSystem);
-        Task.Run(UpdatePlayerPositions);
+        _updatePlayerPositionTask = Task.Run(() => { UpdatePlayerPositions(); });
     }
 
     private void OnEnable()
@@ -146,25 +148,32 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
 
     private Task UpdatePlayerPositions()
     {
-        while (true)
+        try
         {
-            _teamBattleRoomAddedEvent.Wait();
-            if (_teamBattleRoomDic.Count > 0)
+            while (true)
             {
-                foreach (var value in _teamBattleRoomDic.Values)
+                _teamBattleRoomAddedEvent.Wait();
+                if (_teamBattleRoomDic.Count > 0)
                 {
-                    value.SendPlayerPositions();
+                    foreach (var value in _teamBattleRoomDic.Values)
+                    {
+                        value.SendPlayerPositions();
+                    }
                 }
+                else
+                {
+                    _teamBattleRoomAddedEvent.Reset();
+                }
+
+                Thread.Sleep((int)(1000 * UdpSendCycle.TeamBattleRoomSendCycle));
             }
-            else
-            {
-                _teamBattleRoomAddedEvent.Reset();
-            }
-
-            Thread.Sleep((int)(1000 * UdpSendCycle.TeamBattleRoomSendCycle));
-
-
         }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+       
     }
 
 

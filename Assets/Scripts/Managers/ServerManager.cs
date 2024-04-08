@@ -115,13 +115,14 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
 
                 for (int i = _disConnectedClients.Count - 1; i >= 0; i--)
                 {
-                    _disConnectedClients[i].CloseModule();
-                    _connectedClients.Remove(_disConnectedClients[i]);
-                    _disConnectedClients.Remove(_disConnectedClients[i]);
-                    UnityMainThreadDispatcher.Instance().Enqueue(() => _clientsCountText.text = _connectedClients.Count.ToString());
+                        _disConnectedClients[i].CloseModule();
+                        _connectedClients.Remove(_disConnectedClients[i]);
+                        _disConnectedClients.Remove(_disConnectedClients[i]);
+                        UnityMainThreadDispatcher.Instance().Enqueue(() => _clientsCountText.text = _connectedClients.Count.ToString());
+                    
                 }
 
-                Thread.Sleep(10);
+                Thread.Sleep(100);
             }
         }
         catch (SocketException socketException)
@@ -144,7 +145,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                 if (_connectedClients[c].IsConnected())
                 {
                     _theStream = _connectedClients[c].Stream;
-                    if (_theStream is { DataAvailable: true } && _connectedClients[c].IsConnected())
+                    if (_theStream is { DataAvailable: true })
                     {
                         int length = 0;
                         if ((length = _theStream.Read(_connectedClients[c].Bytes, 0,
@@ -194,7 +195,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
 
             }
 
-            Thread.Sleep(1);
+            Thread.Sleep(50);
         }
     }
     private void TcpIncomingDataProcess(ushort msgId, byte[] msgData, int c)
