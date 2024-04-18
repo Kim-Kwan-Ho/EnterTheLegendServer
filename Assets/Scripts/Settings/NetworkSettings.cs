@@ -130,6 +130,10 @@ namespace StandardData
         public ushort RoomId;
         [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
         public ushort PlayerIndex;
+        [MarshalAs(UnmanagedType.R4, SizeConst = 4)]
+        public float PositionX;
+        [MarshalAs(UnmanagedType.R4, SizeConst = 4)]
+        public float PositionY;
     }
 
 
@@ -150,6 +154,8 @@ namespace StandardData
         public ushort Index;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = (int)(NetworkSize.MaxNicknameLength))]
         public string Nickname;
+        [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
+        public ushort Hp;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = NetworkSize.EquipedItemLength)]
         public int[] EquipedItems;
     }

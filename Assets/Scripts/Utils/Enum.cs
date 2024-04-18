@@ -45,5 +45,21 @@ public enum EquipmentType
     Weapon,
     Helmet,
     Armor,
-    Shoes
+    Shoes,
+    None,
+}
+public enum WeaponType
+{
+    Sword,
+    Bow
+}
+public enum WeaponSkillType
+{
+    SelfBuff,
+    TeamBuff,
+    EnemyTargetDeBuff,
+    EnemyTeamDeBuff,
+    AutoCast,
+    TargetCast,
+    None
 }

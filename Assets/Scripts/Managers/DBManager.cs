@@ -7,7 +7,9 @@ using MySql.Data.MySqlClient;
 using TMPro;
 using StandardData;
 using System.Data;
+using System.Linq;
 using System.Runtime.InteropServices;
+using Mono.Cecil;
 
 [RequireComponent(typeof(DBEvent))]
 public class DBManager : SingletonMonobehaviour<DBManager>
@@ -28,6 +30,8 @@ public class DBManager : SingletonMonobehaviour<DBManager>
     [SerializeField]
     private TMP_InputField _dbPasswordInputField;
 
+    [SerializeField]
+    private Dictionary<int, EquipmentSO> _equipmentDic = new Dictionary<int, EquipmentSO>();
 
     private string _ip;
     private string _dbName;
@@ -39,6 +43,12 @@ public class DBManager : SingletonMonobehaviour<DBManager>
         base.Awake();
         EventDB.OnRequestData += Event_GetPlayerDataAsync;
         EventDB.OnPlayerEquipChanged += Event_ChangePlayerEquipItem;
+
+        var items = Resources.LoadAll<EquipmentSO>("Items");
+        foreach (var item in items)
+        {
+            _equipmentDic.Add(item.ItemId, item);
+        }
     }
 
     private void OnDisable()
@@ -179,7 +189,23 @@ public class DBManager : SingletonMonobehaviour<DBManager>
             equipedItem[i] = (int)ds.Tables[0].Rows[i]["ItemId"];
         }
         return equipedItem;
+    }
 
+    public PlayerStat GetPlayerStat(int[] items)
+    {
+        PlayerStat stat = new PlayerStat();
+
+        foreach (int item in items)
+        {
+            if (item == 0)
+                continue;
+            var e = _equipmentDic[item];
+
+            stat.Attack += e.StatAttack;
+            stat.Def += e.StatDefense;
+            stat.Hp += e.StatHp;
+        }
+        return stat;
     }
 
 

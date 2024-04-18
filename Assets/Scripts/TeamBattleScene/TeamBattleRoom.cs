@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -12,12 +13,12 @@ public class TeamBattleRoom
     private ushort _roomId;
     public ushort RoomId { get { return _roomId; } }
 
-    private TeamBattleRoomPlayerInfo[] _players;
+    private BattleRoomPlayerInfo[] _players;
 
     private bool _gameStarted;
 
 
-    public TeamBattleRoom(TeamBattleRoomPlayerInfo[] players)
+    public TeamBattleRoom(BattleRoomPlayerInfo[] players)
     {
         _players = players;
         _gameStarted = false;
@@ -35,6 +36,7 @@ public class TeamBattleRoom
 
         for (ushort i = 0; i < _players.Length; i++)
         {
+            players[i].Stat = DBManager.Instance.GetPlayerStat(playersInfo[i].EquipedItems);
             stCreateTeamBattleRoom createTeamBattleRoom = new stCreateTeamBattleRoom();
             createTeamBattleRoom.Header.MsgID = MessageIdTcp.CreateTeamBattleRoom;
             createTeamBattleRoom.Header.PacketSize = (ushort)Marshal.SizeOf(createTeamBattleRoom);
@@ -47,9 +49,10 @@ public class TeamBattleRoom
 
     }
 
-    public void PlayerLoaded(ushort playerIndex)
+    public void PlayerLoaded(ushort playerIndex, Vector2 position)
     {
         _players[playerIndex].Loaded = true;
+        _players[playerIndex].Positions = position;
         for (int i = 0; i < _players.Length; i++)
         {
             if (!_players[i].Loaded)
@@ -63,7 +66,7 @@ public class TeamBattleRoom
         loadSucceed.IsAllSucceed = true;
         byte[] msg = Utilities.GetObjectToByte(loadSucceed);
 
-        foreach (TeamBattleRoomPlayerInfo player in _players)
+        foreach (BattleRoomPlayerInfo player in _players)
         {
             player.Module.SendTcpMessage(msg);
         }
@@ -131,14 +134,24 @@ public class TeamBattleRoom
         }
     }
 
+    
 
 }
 
 
-public class TeamBattleRoomPlayerInfo
+public class BattleRoomPlayerInfo
 {
     public NetworkModule Module = null;
     public bool Loaded = false;
-    public Vector2 Positions = Vector2.zero;
-    // 플레이어 정보
+    public Vector2 Positions;
+    public PlayerStat Stat;
+
 }
+
+public class PlayerStat
+{
+    public ushort Hp;
+    public ushort Def;
+    public ushort Attack;
+}
+

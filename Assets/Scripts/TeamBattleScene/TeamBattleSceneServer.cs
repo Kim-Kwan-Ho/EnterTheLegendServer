@@ -67,7 +67,7 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
     private void Event_PlayerLoaded(TeamBattleSceneEvent teamBattleSceneEvent,
         TeamBattlePlayerLoadedArgs teamBattlePlayerLoadedArgs)
     {
-        _teamBattleRoomDic[teamBattlePlayerLoadedArgs.roomId].PlayerLoaded(teamBattlePlayerLoadedArgs.playerIndex);
+        _teamBattleRoomDic[teamBattlePlayerLoadedArgs.roomId].PlayerLoaded(teamBattlePlayerLoadedArgs.playerIndex, teamBattlePlayerLoadedArgs.playerPosition);
     }
 
     private void Event_PlayerPositionChanged(TeamBattleSceneEvent teamBattleSceneEvent,
@@ -97,7 +97,7 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
             _teamBattlePlayerAddedEvent.Wait();
             if (_teamBattleMatchingQueue.Count >= GameRoomSize.TeamBattleRoomSize)
             {
-                TeamBattleRoomPlayerInfo[] playerInfos = new TeamBattleRoomPlayerInfo[GameRoomSize.TeamBattleRoomSize];
+                BattleRoomPlayerInfo[] playerInfos = new BattleRoomPlayerInfo[GameRoomSize.TeamBattleRoomSize];
                 int count = 0;
                 for (int i = 0; i < GameRoomSize.TeamBattleRoomSize; i++)
                 {
@@ -130,9 +130,9 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
         }
     }
 
-    private TeamBattleRoomPlayerInfo GetTeamBattlePlayer()
+    private BattleRoomPlayerInfo GetTeamBattlePlayer()
     {
-        TeamBattleRoomPlayerInfo playerInfo = new TeamBattleRoomPlayerInfo();
+        BattleRoomPlayerInfo playerInfo = new BattleRoomPlayerInfo();
         while (_teamBattleMatchingQueue.Count > 0)
         {
             _teamBattleMatchingQueue.TryDequeue(out NetworkModule player);

@@ -31,13 +31,13 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
 
 
     [Header("InputFields")]
-    [SerializeField] 
+    [SerializeField]
     private TMP_InputField _ipInputField;
     [SerializeField]
     private TMP_InputField _portInputField;
     [SerializeField]
     private TMP_InputField _udpPortInputField;
-    [SerializeField] 
+    [SerializeField]
     private TextMeshProUGUI _clientsCountText;
 
     private string _ip;
@@ -98,7 +98,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                     byte[] msg = Utilities.GetObjectToByte(setUdpPort);
                     client.SendTcpMessage(msg);
                     _connectedClients.Add(client);
-                    UnityMainThreadDispatcher.Instance().Enqueue(() =>_clientsCountText.text = _connectedClients.Count.ToString());
+                    UnityMainThreadDispatcher.Instance().Enqueue(() => _clientsCountText.text = _connectedClients.Count.ToString());
                     _udpIndex++;
                 }
 
@@ -115,11 +115,11 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
 
                 for (int i = _disConnectedClients.Count - 1; i >= 0; i--)
                 {
-                        _disConnectedClients[i].CloseModule();
-                        _connectedClients.Remove(_disConnectedClients[i]);
-                        _disConnectedClients.Remove(_disConnectedClients[i]);
-                        UnityMainThreadDispatcher.Instance().Enqueue(() => _clientsCountText.text = _connectedClients.Count.ToString());
-                    
+                    _disConnectedClients[i].CloseModule();
+                    _connectedClients.Remove(_disConnectedClients[i]);
+                    _disConnectedClients.Remove(_disConnectedClients[i]);
+                    UnityMainThreadDispatcher.Instance().Enqueue(() => _clientsCountText.text = _connectedClients.Count.ToString());
+
                 }
 
                 Thread.Sleep(100);
@@ -209,7 +209,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
             case MessageIdTcp.PlayerEquipChanged:
                 stPlayerEquipChangedInfo equipChangedInfo =
                     Utilities.GetObjectFromByte<stPlayerEquipChangedInfo>(msgData);
-                DBManager.Instance.EventDB.CallPlayerEquipChanged(_connectedClients[c].Id, equipChangedInfo.ItemType , equipChangedInfo.AfterItem);
+                DBManager.Instance.EventDB.CallPlayerEquipChanged(_connectedClients[c].Id, equipChangedInfo.ItemType, equipChangedInfo.AfterItem);
                 break;
             case MessageIdTcp.RequestForMatch:
                 stRequestForMatch requestMatch = Utilities.GetObjectFromByte<stRequestForMatch>(msgData);
@@ -217,7 +217,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                 break;
             case MessageIdTcp.TeamBattlePlayerLoadInfo:
                 stTeamBattleRoomPlayerLoadInfo roomLoaded = Utilities.GetObjectFromByte<stTeamBattleRoomPlayerLoadInfo>(msgData);
-                TeamBattleSceneServer.Instance.EventTeamBattleScene.CallPlayerLoaded(roomLoaded.RoomId, roomLoaded.PlayerIndex);
+                TeamBattleSceneServer.Instance.EventTeamBattleScene.CallPlayerLoaded(roomLoaded.RoomId, roomLoaded.PlayerIndex, new Vector2(roomLoaded.PositionX, roomLoaded.PositionY));
                 break;
             case MessageIdTcp.TeamBattleRoomPlayerStateChangedToServer:
                 stTeamBattleRoomPlayerStateChangedToServer stateChanged =
@@ -251,7 +251,7 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
         }
     }
 
-    
+
     public void CloseSocket()
     {
 
