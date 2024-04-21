@@ -27,6 +27,9 @@ namespace StandardData
         public const ushort BattleRoomPlayerStateChangedFromServer = 77;
         public const ushort TeamBattleRoomPlayerDirectionChangedToServer = 8;
         public const ushort BattleRoomPlayerDirectionChangedFromServer = 88;
+        public const ushort TeamBattleRoomPlayerAttackToServer = 11;
+        public const ushort TeamBattleRoomPlayerAttackFromServer = 12;
+        public const ushort BattleRoomPlayerTakeDamage = 13;
         public const ushort RequestPlayerData = 9;
         public const ushort ResponsePlayerData = 999;
         public const ushort PlayerEquipChanged = 10;
@@ -202,6 +205,9 @@ namespace StandardData
         [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
         public ushort Direction;
     }
+
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct stBattleRoomPlayerDirectionChangedFromServer
     {
         public stHeaderTcp Header;
@@ -215,11 +221,23 @@ namespace StandardData
     {
         public stHeaderTcp Header;
         public stTeamBattleRoomPlayerInfo PlayerInfo;
-        [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
-        public ushort State;
     }
-
-
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct stBattleRoomPlayerAttackFromServer
+    {
+        public stHeaderTcp Header;
+        [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
+        public ushort PlayerIndex;
+    }
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct stBattleRoomPlayerTakeDamage
+    {
+        public stHeaderTcp Header;
+        [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
+        public ushort PlayerIndex;
+        [MarshalAs(UnmanagedType.U2, SizeConst = 2)]
+        public ushort Damage;
+    }
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct stHeaderUdp
     {

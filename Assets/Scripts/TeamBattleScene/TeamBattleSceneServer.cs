@@ -34,6 +34,7 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
         EventTeamBattleScene.OnPlayerPositionChanged += Event_PlayerPositionChanged;
         EventTeamBattleScene.OnPlayerStateChanged += Event_PlayerStateChanged;
         EventTeamBattleScene.OnPlayerDirectionChanged += Event_PlayerDirectionChanged;
+        EventTeamBattleScene.OnPlayerAttack += Event_PlayerOnAttack;
     }
 
     private void OnDisable()
@@ -43,6 +44,7 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
         EventTeamBattleScene.OnPlayerPositionChanged -= Event_PlayerPositionChanged;
         EventTeamBattleScene.OnPlayerStateChanged -= Event_PlayerStateChanged;
         EventTeamBattleScene.OnPlayerDirectionChanged -= Event_PlayerDirectionChanged;
+        EventTeamBattleScene.OnPlayerAttack -= Event_PlayerOnAttack;
     }
 
     private void Update()
@@ -89,6 +91,12 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
     {
         _teamBattleRoomDic[teamBattlePlayerDirectionChangedArgs.roomId]
             .PlayerDirectionChanged(teamBattlePlayerDirectionChangedArgs.playerIndex, teamBattlePlayerDirectionChangedArgs.direction);
+    }
+
+    private void Event_PlayerOnAttack(TeamBattleSceneEvent teamBattleSceneEvent,
+        TeamBattlePlayerAttackEventArgs teamBattlePlayerAttackEventArgs)
+    {
+        _teamBattleRoomDic[teamBattlePlayerAttackEventArgs.roomId].PlayerOnAttack(teamBattlePlayerAttackEventArgs.playerIndex);
     }
     private Task TeamBattleMatchMakingSystem()
     {

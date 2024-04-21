@@ -12,6 +12,8 @@ public class TeamBattleSceneEvent : MonoBehaviour
     public Action<TeamBattleSceneEvent, TeamBattlePlayerPositionChangedArgs> OnPlayerPositionChanged;
     public Action<TeamBattleSceneEvent, TeamBattlePlayerStateChangedArgs> OnPlayerStateChanged;
     public Action<TeamBattleSceneEvent, TeamBattlePlayerDirectionChangedArgs> OnPlayerDirectionChanged;
+    public Action<TeamBattleSceneEvent, TeamBattlePlayerAttackEventArgs> OnPlayerAttack;
+
 
     public void CallRequestTeamBattleMatch(GameRoomType roomType, NetworkModule module)
     {
@@ -41,6 +43,11 @@ public class TeamBattleSceneEvent : MonoBehaviour
         OnPlayerDirectionChanged?.Invoke(this,
             new TeamBattlePlayerDirectionChangedArgs()
             { roomId = roomId, playerIndex = playerIndex, direction = direction });
+    }
+
+    public void CallPlayerOnAttack(ushort roomId, ushort playerIndex)
+    {
+        OnPlayerAttack?.Invoke(this, new TeamBattlePlayerAttackEventArgs() { roomId = roomId, playerIndex = playerIndex });
     }
 }
 
@@ -73,4 +80,10 @@ public class TeamBattlePlayerDirectionChangedArgs : EventArgs
     public ushort roomId;
     public ushort playerIndex;
     public ushort direction;
+}
+
+public class TeamBattlePlayerAttackEventArgs : EventArgs
+{
+    public ushort roomId;
+    public ushort playerIndex;
 }

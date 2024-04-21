@@ -232,6 +232,11 @@ public class ServerManager : SingletonMonobehaviour<ServerManager>
                 TeamBattleSceneServer.Instance.EventTeamBattleScene.CallPlayerDirectionChanged(directionChanged.PlayerInfo.RoomId,
                     directionChanged.PlayerInfo.PlayerIndex, directionChanged.Direction);
                 break;
+            case MessageIdTcp.TeamBattleRoomPlayerAttackToServer:
+                stTeamBattleRoomPlayerOnAttack onAttack =
+                    Utilities.GetObjectFromByte<stTeamBattleRoomPlayerOnAttack>(msgData);
+                TeamBattleSceneServer.Instance.EventTeamBattleScene.CallPlayerOnAttack(onAttack.PlayerInfo.RoomId, onAttack.PlayerInfo.PlayerIndex);
+                break;
             default:
                 break;
         }
