@@ -62,7 +62,7 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
         }
         else
         {
-            
+
         }
     }
 
@@ -105,22 +105,28 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
             _teamBattlePlayerAddedEvent.Wait();
             if (_teamBattleMatchingQueue.Count >= GameRoomSize.TeamBattleRoomSize)
             {
-                BattleRoomPlayerInfo[] playerInfos = new BattleRoomPlayerInfo[GameRoomSize.TeamBattleRoomSize];
+                BattleRoomPlayer[] playerInfos = new BattleRoomPlayer[GameRoomSize.TeamBattleRoomSize];
                 int count = 0;
                 for (int i = 0; i < GameRoomSize.TeamBattleRoomSize; i++)
                 {
                     playerInfos[i] = GetTeamBattlePlayer();
-                    if (playerInfos[i].Module == null)
+                    if (playerInfos[i] == null)
                     {
                         count = i;
                         break;
                     }
                 }
+
+
                 if (count > 0)
                 {
                     for (int i = 0; i < count; i++)
                     {
-                        _teamBattleMatchingQueue.Enqueue(playerInfos[i].Module);
+                        /*
+                        ¸ÅÄª Äµ½½µÆ´Ù´Â ¸Þ½ÃÁö Àü¼Û Ãß°¡
+                         
+                         */
+                        //_teamBattleMatchingQueue.Enqueue(playerInfos[i].SendTcpMessage());
                     }
                 }
                 else
@@ -129,7 +135,7 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
                     _teamBattleRoomDic.TryAdd(teamBattleRoom.RoomId, teamBattleRoom);
                     _teamBattleRoomAddedEvent.Set();
                 }
-                
+
             }
             else
             {
@@ -138,50 +144,40 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
         }
     }
 
-    private BattleRoomPlayerInfo GetTeamBattlePlayer()
+    private BattleRoomPlayer GetTeamBattlePlayer()
     {
-        BattleRoomPlayerInfo playerInfo = new BattleRoomPlayerInfo();
         while (_teamBattleMatchingQueue.Count > 0)
         {
             _teamBattleMatchingQueue.TryDequeue(out NetworkModule player);
             if (!_teamBattleCanceledMatch.Contains(player.Id))
             {
-                playerInfo.Module = player;
+                BattleRoomPlayer playerInfo = new BattleRoomPlayer(player);
                 return playerInfo;
             }
             _teamBattleCanceledMatch.Remove(player.Id);
         }
-        return playerInfo;
+        return null;
     }
 
     private Task UpdatePlayerPositions()
     {
-        try
+        while (true)
         {
-            while (true)
+            _teamBattleRoomAddedEvent.Wait();
+            if (_teamBattleRoomDic.Count > 0)
             {
-                _teamBattleRoomAddedEvent.Wait();
-                if (_teamBattleRoomDic.Count > 0)
+                foreach (var value in _teamBattleRoomDic.Values)
                 {
-                    foreach (var value in _teamBattleRoomDic.Values)
-                    {
-                        value.SendPlayerPositions();
-                    }
+                    value.SendPlayerPositions();
                 }
-                else
-                {
-                    _teamBattleRoomAddedEvent.Reset();
-                }
-
-                Thread.Sleep((int)(1000 * UdpSendCycle.TeamBattleRoomSendCycle));
             }
+            else
+            {
+                _teamBattleRoomAddedEvent.Reset();
+            }
+
+            Thread.Sleep((int)(1000 * UdpSendCycle.TeamBattleRoomSendCycle));
         }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
-       
     }
 
 
