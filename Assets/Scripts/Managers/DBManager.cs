@@ -191,21 +191,11 @@ public class DBManager : SingletonMonobehaviour<DBManager>
         return equipedItem;
     }
 
-    public PlayerStat GetPlayerStat(int[] items)
+    public EquipmentSO GetEquipmentSO(int item)
     {
-        PlayerStat stat = new PlayerStat();
-
-        foreach (int item in items)
-        {
-            if (item == 0)
-                continue;
-            var e = _equipmentDic[item];
-
-            stat.Attack += e.StatAttack;
-            stat.Def += e.StatDefense;
-            stat.Hp += e.StatHp;
-        }
-        return stat;
+        if (item == 0)
+            return null;
+        return _equipmentDic[item];
     }
 
 

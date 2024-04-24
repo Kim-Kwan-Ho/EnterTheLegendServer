@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: 20000
   m_EditorClassIdentifier: 
   ItemId: 20000
+  Type: 1
   StatHp: 4
   StatAttack: 4
   StatDefense: 4
   WeaponType: 0
-  AttackRange: 3
+  AttackAngle: 20
+  AttackRange: 5
   WeaponSkill: {fileID: 0}

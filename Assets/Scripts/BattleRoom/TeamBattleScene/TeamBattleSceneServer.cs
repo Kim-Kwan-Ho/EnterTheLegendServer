@@ -96,7 +96,7 @@ public class TeamBattleSceneServer : SingletonMonobehaviour<TeamBattleSceneServe
     private void Event_PlayerOnAttack(TeamBattleSceneEvent teamBattleSceneEvent,
         TeamBattlePlayerAttackEventArgs teamBattlePlayerAttackEventArgs)
     {
-        _teamBattleRoomDic[teamBattlePlayerAttackEventArgs.roomId].PlayerOnAttack(teamBattlePlayerAttackEventArgs.playerIndex);
+        _teamBattleRoomDic[teamBattlePlayerAttackEventArgs.roomId].PlayerAttack(teamBattlePlayerAttackEventArgs.playerIndex);
     }
     private Task TeamBattleMatchMakingSystem()
     {

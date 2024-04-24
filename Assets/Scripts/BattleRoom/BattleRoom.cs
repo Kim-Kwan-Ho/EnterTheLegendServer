@@ -1,3 +1,4 @@
+using System;
 using StandardData;
 using System.Collections;
 using System.Collections.Generic;
@@ -108,32 +109,68 @@ public class BattleRoom
         }
     }
 
-    public virtual void PlayerOnAttack(ushort playerIndex)
+    public virtual void PlayerAttack(ushort playerIndex)
     {
         stBattleRoomPlayerAttackFromServer playerAttack = new stBattleRoomPlayerAttackFromServer();
         playerAttack.Header.MsgID = MessageIdTcp.TeamBattleRoomPlayerAttackToServer;
         playerAttack.Header.PacketSize = (ushort)Marshal.SizeOf(playerAttack);
         playerAttack.PlayerIndex = playerIndex;
         SendPlayersMessage(playerAttack, false, playerIndex);
+        bool isBlueTeam = playerIndex < _players.Length / 2;
+        CheckPlayerOnAttack(playerIndex, isBlueTeam ? _players.Length / 2 : 0, isBlueTeam ? _players.Length : _players.Length / 2);
     }
-    protected virtual void CheckHit(bool blueTeam, Vector2 attackPos, Direction direction, float distance, float attackAngle)
+
+    private void CheckPlayerOnAttack(ushort attackPlayer, int startIndex, int endIndex)
     {
+        for (int i = startIndex; i < endIndex; i++)
+        {
+            if (_players[attackPlayer].CheckHit(_players[i].Position))
+            {
+                stBattleRoomPlayerTakeDamage takeDamage = new stBattleRoomPlayerTakeDamage();
+                takeDamage.Header.MsgID = MessageIdTcp.BattleRoomPlayerTakeDamage;
+                takeDamage.Header.PacketSize = (ushort)Marshal.SizeOf(takeDamage);
+                takeDamage.PlayerIndex = (ushort)i;
+                takeDamage.Damage = _players[i].TakeDamage(_players[attackPlayer].Attack);
+                SendPlayersMessage(takeDamage, true);
+            }
+        }
     }
+
+
+
 }
 
 public class BattleRoomPlayer
 {
     private NetworkModule _module;
+
+
+    [Header("Character Info")]
     private bool _loaded = false;
     public bool Loaded { get { return _loaded; } }
     private Vector2 _position;
     public Vector2 Position { get { return _position; } }
-    private State _state;
-    public State State { get { return _state; } }
+    private CharacterState _state;
+    public CharacterState State { get { return _state; } }
     private Direction _direction;
     public Direction Direction { get { return _direction; } }
 
-    public PlayerStat Stat;
+
+    [Header("Stats")]
+    private ushort _hp;
+    public ushort Hp { get { return _hp; } }
+    private ushort _defense;
+    public ushort Defense { get { return _defense; } }
+    private ushort _attack;
+    public ushort Attack { get { return _attack; } }
+
+    [Header("Equipments")]
+    private EquipmentSO _characterEquip;
+    private WeaponEquipmentSO _weaponEquip;
+    private EquipmentSO _helmetEquip;
+    private EquipmentSO _armorEquip;
+    private EquipmentSO _shoesEquip;
+
 
     public BattleRoomPlayer(NetworkModule module)
     {
@@ -149,7 +186,7 @@ public class BattleRoomPlayer
     {
         _position = position;
     }
-    public void SetState(State state)
+    public void SetState(CharacterState state)
     {
         _state = state;
     }
@@ -177,12 +214,84 @@ public class BattleRoomPlayer
     }
 
 
-}
 
-public class PlayerStat
-{
-    public ushort Hp;
-    public ushort Def;
-    public ushort Attack;
-}
+    public void SetEquipment(EquipmentType type, EquipmentSO equipment)
+    {
+        _hp += equipment.StatHp;
+        _attack += equipment.StatAttack;
+        _defense += equipment.StatDefense;
+        if (type == EquipmentType.Character)
+        {
+            _characterEquip = equipment;
+        }
+        else if (type == EquipmentType.Weapon)
+        {
+            _weaponEquip = (WeaponEquipmentSO)equipment;
+        }
+        else if (type == EquipmentType.Helmet)
+        {
+            _helmetEquip = equipment;
+        }
+        else if (type == EquipmentType.Armor)
+        {
+            _armorEquip = equipment;
+        }
+        else if (type == EquipmentType.Shoes)
+        {
+            _shoesEquip = equipment;
+        }
+    }
+    public bool CheckHit(Vector2 attackPosition)
+    {
+        Vector2 forward = DirectionToVector(_direction);
+        Vector2 dir = attackPosition - _position;
 
+        if (dir.magnitude <= _weaponEquip.AttackRange && IsInAttackAngle(dir, forward))
+            return true;
+        else
+            return false;
+    }
+    private Vector2 DirectionToVector(Direction direction)
+    {
+        switch (direction)
+        {
+            case Direction.Down:
+                return Vector2.down;
+            case Direction.Left:
+                return Vector2.left;
+            case Direction.Right:
+                return Vector2.right;
+            case Direction.Up:
+                return Vector2.up;
+            default:
+                return Vector2.zero;
+        }
+    }
+
+    private bool IsInAttackAngle(Vector2 direction, Vector2 forward)
+    {
+        float dot = Vector2.Dot(direction.normalized, forward);
+        float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
+        return angle <= _weaponEquip.AttackAngle;
+    }
+
+    public ushort TakeDamage(ushort damage)
+    {
+        int amount = damage - _defense;
+
+        if (amount <= 0)
+            amount = 1;
+
+        if (_hp > amount)
+        {
+            return (ushort)amount;
+        }
+        else
+        {
+            amount = _hp;
+            _hp = 0;
+            _state = CharacterState.Death;
+            return (ushort)amount;
+        }
+    }
+}

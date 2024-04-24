@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: 30000
   m_EditorClassIdentifier: 
   ItemId: 30000
+  Type: 2
   StatHp: 3
   StatAttack: 3
   StatDefense: 3

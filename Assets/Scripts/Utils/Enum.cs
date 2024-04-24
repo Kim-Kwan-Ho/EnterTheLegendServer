@@ -7,7 +7,7 @@ public enum Direction
     Previous = 4,
 }
 
-public enum State
+public enum CharacterState
 {
     Idle = 0,
     Move = 1,
